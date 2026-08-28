@@ -1,87 +1,159 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Chat App with Media & Video</title>
+    <title>Chat & Video Call App</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f9; }
-        #chat-container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        #messages { list-style-type: none; padding: 0; height: 350px; overflow-y: scroll; border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; }
-        #messages li { padding: 8px; margin-bottom: 8px; background: #e1ffc7; border-radius: 4px; word-break: break-all; }
-        #messages img, #messages video { max-width: 100%; border-radius: 4px; margin-top: 5px; display: block; }
-        form { display: flex; gap: 5px; flex-wrap: wrap; }
-        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; min-width: 150px; }
-        input[type="file"] { display: none; }
-        .file-upload-btn { padding: 10px 15px; background: #6c757d; color: white; border-radius: 4px; cursor: pointer; text-align: center; }
-        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; background: #f0f2f5; }
+        #chat-container { max-width: 600px; margin: auto; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #messages { list-style-type: none; padding: 0; height: 200px; overflow-y: scroll; border: 1px solid #ddd; margin-bottom: 10px; padding: 5px; }
+        #messages li { padding: 5px; border-bottom: 1px solid #eee; }
+        .video-box { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
+        video { width: 45%; background: black; border-radius: 5px; transform: scaleX(-1); }
+        input, button { padding: 8px; margin-top: 5px; }
+        #username { width: 100%; box-sizing: border-box; margin-bottom: 5px; }
+        .input-row { display: flex; gap: 5px; }
+        #message-input { flex: 1; }
     </style>
 </head>
 <body>
-    <div id="chat-container">
-        <h2>My Chat App</h2>
-        <ul id="messages"></ul>
-        <form id="form" action="">
-            <input id="username" type="text" placeholder="Your name..." required style="flex: 0 0 120px;" />
-            <input id="input" autocomplete="off" placeholder="Type a message..." />
-            <label for="mediaInput" class="file-upload-btn">📁</label>
-            <input type="file" id="mediaInput" accept="image/*,video/*" />
-            <button>Send</button>
-        </form>
+
+<div id="chat-container">
+    <h2>My Chat & Video Call</h2>
+    
+    <!-- Video Call UI -->
+    <div class="video-box">
+        <video id="localVideo" autoplay muted playsinline></video>
+        <video id="remoteVideo" autoplay playsinline></video>
+    </div>
+    <div style="text-align: center; margin-bottom: 10px;">
+        <button id="startCall" style="background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">ဗီဒီယိုခေါ်မည်</button>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
+    <!-- Chat UI -->
+    <input type="text" id="username" placeholder="Your name...">
+    <ul id="messages"></ul>
+    <div class="input-row">
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <button id="send-btn" style="background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Send</button>
+    </div>
+</div>
 
-        const form = document.getElementById('form');
-        const input = document.getElementById('input');
-        const usernameInput = document.getElementById('username');
-        const mediaInput = document.getElementById('mediaInput');
-        const messages = document.getElementById('messages');
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    
+    const usernameInput = document.getElementById('username');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const messages = document.getElementById('messages');
+    
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const startCallBtn = document.getElementById('startCall');
 
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = usernameInput.value || 'Anonymous';
-            
-            if (mediaInput.files && mediaInput.files[0]) {
-                const file = mediaInput.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const fileData = e.target.result;
-                    if (file.type.startsWith('image/')) {
-                        socket.emit('chat message', { user: username, image: fileData });
-                    } else if (file.type.startsWith('video/')) {
-                        socket.emit('chat message', { user: username, video: fileData });
-                    }
-                    mediaInput.value = '';
-                };
-                reader.readAsDataURL(file);
-            }
+    let localStream;
+    let peerConnection;
 
-            if (input.value) {
-                socket.emit('chat message', { user: username, text: input.value });
-                input.value = '';
-            }
+    const servers = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' }
+        ]
+    };
+
+    // Chat functionality
+    sendBtn.onclick = () => {
+        const name = usernameInput.value.trim() || 'Anonymous';
+        const msg = messageInput.value.trim();
+        if (msg) {
+            socket.emit('chat message', { name, msg });
+            messageInput.value = '';
+        }
+    };
+
+    socket.on('chat message', (data) => {
+        const item = document.createElement('li');
+        item.textContent = `${data.name}: ${data.msg}`;
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+    });
+
+    // Video Call functionality
+    async function startCamera() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideo.srcObject = localStream;
+        } catch (error) {
+            alert('ကင်မရာ သို့မဟုတ် မိုက်ခရိုဖုန်း အသုံးပြုခွင့် ငြင်းပယ်ခံရပါသည် (သို့) ဖုန်းတွင် မရှိပါ။');
+            console.error(error);
+        }
+    }
+
+    startCamera();
+
+    startCallBtn.onclick = async () => {
+        startCallBtn.disabled = true;
+        peerConnection = new RTCPeerConnection(servers);
+
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
         });
 
-        socket.on('chat message', function(data) {
-            const item = document.createElement('li');
-            let content = `<strong>${data.user}:</strong> `;
-            if (data.text) {
-                content += `${data.text}`;
+        peerConnection.ontrack = (event) => {
+            remoteVideo.srcObject = event.streams[0];
+        };
+
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('ice-candidate', event.candidate);
             }
-            if (data.image) {
-                content += `<br><img src="${data.image}" />`;
+        };
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        socket.emit('offer', offer);
+    };
+
+    socket.on('offer', async (offer) => {
+        if (!peerConnection) {
+            peerConnection = new RTCPeerConnection(servers);
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            peerConnection.ontrack = (event) => {
+                remoteVideo.srcObject = event.streams[0];
+            };
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('ice-candidate', event.candidate);
+                }
+            };
+        }
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('answer', answer);
+    });
+
+    socket.on('answer', async (answer) => {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on('ice-candidate', async (candidate) => {
+        try {
+            if (peerConnection) {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
             }
-            if (data.video) {
-                content += `<br><video controls src="${data.video}"></video>`;
-            }
-            item.innerHTML = content;
-            messages.appendChild(item);
-            messages.scrollTop = messages.scrollHeight;
-        });
-    </script>
+        } catch (e) {
+            console.error('Error adding received ice candidate', e);
+        }
+    });
+</script>
+
 </body>
 </html>
 
