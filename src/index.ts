@@ -10,7 +10,12 @@ const server = createServer(app);
 const io = new Server(server);
 
 app.use(express.json());
-app.use(express.static(path.join(process.cwd(), "public")));
+app.use(express.static(path.join(__dirname, '../src')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../src/index.html'));
+});
+
 
 io.on("connection", (socket) => {
   console.log("A user connected:", socket.id);
