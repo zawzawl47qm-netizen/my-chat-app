@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Chat App with Media</title>
+    <title>My Chat App with Media & Video</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f9; }
         #chat-container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         #messages { list-style-type: none; padding: 0; height: 350px; overflow-y: scroll; border: 1px solid #ddd; margin-bottom: 10px; padding: 10px; }
         #messages li { padding: 8px; margin-bottom: 8px; background: #e1ffc7; border-radius: 4px; word-break: break-all; }
-        #messages img { max-width: 100%; border-radius: 4px; margin-top: 5px; display: block; }
+        #messages img, #messages video { max-width: 100%; border-radius: 4px; margin-top: 5px; display: block; }
         form { display: flex; gap: 5px; flex-wrap: wrap; }
         input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; min-width: 150px; }
         input[type="file"] { display: none; }
@@ -24,8 +24,8 @@
         <form id="form" action="">
             <input id="username" type="text" placeholder="Your name..." required style="flex: 0 0 120px;" />
             <input id="input" autocomplete="off" placeholder="Type a message..." />
-            <label for="imageInput" class="file-upload-btn">📷</label>
-            <input type="file" id="imageInput" accept="image/*" />
+            <label for="mediaInput" class="file-upload-btn">📁</label>
+            <input type="file" id="mediaInput" accept="image/*,video/*" />
             <button>Send</button>
         </form>
     </div>
@@ -37,20 +37,26 @@
         const form = document.getElementById('form');
         const input = document.getElementById('input');
         const usernameInput = document.getElementById('username');
-        const imageInput = document.getElementById('imageInput');
+        const mediaInput = document.getElementById('mediaInput');
         const messages = document.getElementById('messages');
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const username = usernameInput.value || 'Anonymous';
             
-            if (imageInput.files && imageInput.files[0]) {
+            if (mediaInput.files && mediaInput.files[0]) {
+                const file = mediaInput.files[0];
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    socket.emit('chat message', { user: username, image: e.target.result });
-                    imageInput.value = '';
+                    const fileData = e.target.result;
+                    if (file.type.startsWith('image/')) {
+                        socket.emit('chat message', { user: username, image: fileData });
+                    } else if (file.type.startsWith('video/')) {
+                        socket.emit('chat message', { user: username, video: fileData });
+                    }
+                    mediaInput.value = '';
                 };
-                reader.readAsDataURL(imageInput.files[0]);
+                reader.readAsDataURL(file);
             }
 
             if (input.value) {
@@ -67,6 +73,9 @@
             }
             if (data.image) {
                 content += `<br><img src="${data.image}" />`;
+            }
+            if (data.video) {
+                content += `<br><video controls src="${data.video}"></video>`;
             }
             item.innerHTML = content;
             messages.appendChild(item);
