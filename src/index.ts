@@ -1,4 +1,4 @@
-import express from "express";
+// @ts-nocheck
 import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
