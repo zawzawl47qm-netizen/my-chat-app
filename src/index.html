@@ -32,7 +32,11 @@
     <div style="text-align: center; margin-bottom: 10px;">
         <button id="startCall" style="background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">ဗီဒီယိုခေါ်မည်</button>
     </div>
-
+    <div id="call-controls" style="display: none; margin-top: 10px; text-align: center;">
+  <button id="acceptBtn" style="background-color: #28a745; color: white; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer;">Accept</button>
+  <button id="rejectBtn" style="background-color: #dc3545; color: white; padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; margin-left: 5px;">Reject</button>
+    </div>
+    
     <!-- Chat UI -->
     <input type="text" id="username" placeholder="Your name...">
     <ul id="messages"></ul>
@@ -50,11 +54,14 @@
     const messageInput = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
     const messages = document.getElementById('messages');
+    const startCallBtn = document.getElementById('startCall');
+const callControls = document.getElementById('call-controls');
+const acceptBtn = document.getElementById('acceptBtn');
+const rejectBtn = document.getElementById('rejectBtn');
     
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
-    const startCallBtn = document.getElementById('startCall');
-
+    
     let localStream;
     let peerConnection;
 
@@ -117,32 +124,43 @@
         socket.emit('offer', offer);
     };
 
-    socket.on('offer', async (offer) => {
-        if (!peerConnection) {
-            peerConnection = new RTCPeerConnection(servers);
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
+    let incomingOffer = null;
 
-            peerConnection.ontrack = (event) => {
-                remoteVideo.srcObject = event.streams[0];
-            };
+socket.on('offer', async (offer) => {
+    incomingOffer = offer;
+    callControls.style.display = 'block';
+});
 
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('ice-candidate', event.candidate);
-                }
-            };
-        }
-
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        socket.emit('answer', answer);
+acceptBtn.onclick = async () => {
+    callControls.style.display = 'none';
+    peerConnection = new RTCPeerConnection(servers);
+    
+    localStream.getTracks().forEach(track => {
+        peerConnection.addTrack(track, localStream);
     });
 
-    socket.on('answer', async (answer) => {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    peerConnection.ontrack = (event) => {
+        remoteVideo.srcObject = event.streams[0];
+    };
+
+    peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+            socket.emit('ice-candidate', event.candidate);
+        }
+    };
+
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.emit('answer', answer);
+};
+
+rejectBtn.onclick = () => {
+    callControls.style.display = 'none';
+    incomingOffer = null;
+    socket.emit('reject-call');
+};
+    
     });
 
     socket.on('ice-candidate', async (candidate) => {
