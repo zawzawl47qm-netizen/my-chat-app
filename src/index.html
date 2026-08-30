@@ -180,7 +180,9 @@ acceptBtn.onclick = async () => {
     await peerConnection.setLocalDescription(answer);
     socket.emit('answer', answer);
 };
-
+const callMsg = `<div class="call-log-bubble"><span style="font-size: 20px;">📹</span><div><span class="title">Video call</span><span class="time">Just now</span></div></div>`;
+socket.emit('chat message', { name: usernameInput.value || 'System', msg: callMsg });
+    
 rejectBtn.onclick = () => {
     callControls.style.display = 'none';
     incomingOffer = null;
