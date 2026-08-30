@@ -25,7 +25,6 @@
     </style>
 </head>
 <body>
-
     <div class="header">
         <div class="user-info">
             <div class="avatar">SL</div>
@@ -35,29 +34,21 @@
             </div>
         </div>
     </div>
-
     <div class="chat-body" id="chatBody">
         <div class="message incoming">မင်္ဂလာပါရှင်။ စာ၊ ဓာတ်ပုံ၊ အသံဖိုင်နှင့် ဗီဒီယိုများ ပို့လို့ရပါပြီ။</div>
     </div>
-
     <div class="chat-footer">
-        <!-- ဓာတ်ပုံနှင့် ဗီဒီယို တင်ရန် -->
         <label class="media-btn" title="ဓာတ်ပုံ/ဗီဒီယို ပို့ရန်">📷
             <input type="file" id="mediaInput" accept="image/*,video/*" style="display: none;" onchange="sendMedia(event)">
         </label>
-        
-        <!-- အသံဖိုင် တင်ရန် -->
         <label class="media-btn" title="အသံဖိုင် ပို့ရန်">🎵
             <input type="file" id="audioInput" accept="audio/*" style="display: none;" onchange="sendAudio(event)">
         </label>
-
         <input type="text" id="messageInput" placeholder="Aa" onkeypress="handlePress(event)">
         <button class="send-btn" onclick="sendMessage()">➤</button>
     </div>
-
     <script>
         const chatBody = document.getElementById('chatBody');
-
         function sendMessage() {
             const input = document.getElementById('messageInput');
             if (input.value.trim() !== "") {
@@ -69,12 +60,9 @@
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
         }
-
         function handlePress(e) {
             if (e.key === 'Enter') sendMessage();
         }
-
-        // ဓာတ်ပုံ သို့မဟုတ် ဗီဒီယို ပို့သည့် ဖန်ရှင်
         function sendMedia(event) {
             const file = event.target.files[0];
             if (file) {
@@ -82,7 +70,6 @@
                 reader.onload = function(e) {
                     const msgDiv = document.createElement('div');
                     msgDiv.classList.add('message', 'outgoing');
-                    
                     if (file.type.startsWith('video/')) {
                         const video = document.createElement('video');
                         video.src = e.target.result;
@@ -93,15 +80,12 @@
                         img.src = e.target.result;
                         msgDiv.appendChild(img);
                     }
-
                     chatBody.appendChild(msgDiv);
                     chatBody.scrollTop = chatBody.scrollHeight;
                 }
                 reader.readAsDataURL(file);
             }
         }
-
-        // အသံဖိုင် ပို့သည့် ဖန်ရှင်
         function sendAudio(event) {
             const file = event.target.files[0];
             if (file) {
@@ -109,12 +93,10 @@
                 reader.onload = function(e) {
                     const msgDiv = document.createElement('div');
                     msgDiv.classList.add('message', 'outgoing');
-                    
                     const audio = document.createElement('audio');
                     audio.src = e.target.result;
                     audio.controls = true;
                     msgDiv.appendChild(audio);
-
                     chatBody.appendChild(msgDiv);
                     chatBody.scrollTop = chatBody.scrollHeight;
                 }
@@ -122,7 +104,6 @@
             }
         }
     </script>
-
 </body>
 </html>
 
