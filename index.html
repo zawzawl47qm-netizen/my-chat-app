@@ -12,6 +12,8 @@
         .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; background: linear-gradient(135deg, #6a11cb, #2575fc); }
         .name-status h3 { font-size: 16px; color: #000; }
         .name-status p { font-size: 12px; color: gray; }
+        .header-icons { display: flex; gap: 12px; }
+        .call-btn { background: #f0f2f5; border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: #f9f9f9; }
         .message { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-break: break-word; }
         .incoming { background-color: #e4e6eb; color: #000; align-self: flex-start; }
@@ -34,10 +36,15 @@
                 <p>Online</p>
             </div>
         </div>
+        <!-- 📞 ဖုန်းခေါ်ရန်နှင့် 📹 ဗီဒီယိုခေါ်ရန် ခလုတ်များ -->
+        <div class="header-icons">
+            <button class="call-btn" onclick="alert('အသံဖိုင်ဖြင့် ခေါ်ဆိုနေပါပြီ...')">📞</button>
+            <button class="call-btn" onclick="alert('ဗီဒီယိုဖြင့် ခေါ်ဆိုနေပါပြီ...')">📹</button>
+        </div>
     </div>
 
     <div class="chat-body" id="chatBody">
-        <div class="message incoming">မင်္ဂလာပါရှင်။ My Chat App မှ ကြိုဆိုပါတယ်။ စာ၊ ဓာတ်ပုံ၊ အသံဖိုင်နှင့် ဗီဒီယိုများ ပို့လို့ရပါပြီ။</div>
+        <div class="message incoming">မင်္ဂလာပါရှင်။ My Chat App မှ ကြိုဆိုပါတယ်။ စာ၊ ဓာတ်ပုံ၊ အသံဖိုင်၊ ဗီဒီယိုနှင့် ဖုန်းခေါ်ဆိုမှုများ ပို့လို့ရပါပြီ။</div>
     </div>
 
     <div class="chat-footer">
