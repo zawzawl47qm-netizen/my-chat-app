@@ -3,117 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messenger Chat</title>
+    <title>Messenger Chat App</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-        body {
-            background-color: #fff;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        /* Header Style */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 15px;
-            border-bottom: 1px solid #ddd;
-            background-color: #fff;
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .avatar {
-            width: 40px;
-            height: 40px;
-            background-color: #ccc;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #fff;
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
-        }
-        .name-status h3 {
-            font-size: 16px;
-            color: #000;
-        }
-        .name-status p {
-            font-size: 12px;
-            color: gray;
-        }
-        .icons {
-            display: flex;
-            gap: 20px;
-            color: #0084ff;
-            font-size: 20px;
-            cursor: pointer;
-        }
-        /* Chat Body Style */
-        .chat-body {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background-color: #f9f9f9;
-        }
-        .message {
-            max-width: 70%;
-            padding: 10px 14px;
-            border-radius: 18px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        .incoming {
-            background-color: #e4e6eb;
-            color: #000;
-            align-self: flex-start;
-        }
-        .outgoing {
-            background-color: #0084ff;
-            color: #fff;
-            align-self: flex-end;
-        }
-        /* Footer Input Style */
-        .chat-footer {
-            display: flex;
-            align-items: center;
-            padding: 10px 15px;
-            border-top: 1px solid #ddd;
-            background-color: #fff;
-            gap: 10px;
-        }
-        .chat-footer input {
-            flex: 1;
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            outline: none;
-            background-color: #f0f2f5;
-            font-size: 14px;
-        }
-        .send-btn {
-            background-color: #0084ff;
-            color: #fff;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-weight: bold;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: #fff; display: flex; flex-direction: column; height: 100vh; max-width: 500px; margin: 0 auto; }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #ddd; background-color: #fff; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; background: linear-gradient(135deg, #00c6ff, #0072ff); }
+        .name-status h3 { font-size: 16px; color: #000; }
+        .name-status p { font-size: 12px; color: gray; }
+        .icons { display: flex; gap: 15px; font-size: 20px; cursor: pointer; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: #f9f9f9; }
+        .message { max-width: 70%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-break: break-word; }
+        .incoming { background-color: #e4e6eb; color: #000; align-self: flex-start; }
+        .outgoing { background-color: #0084ff; color: #fff; align-self: flex-end; }
+        .message img { max-width: 100%; border-radius: 10px; margin-top: 5px; }
+        .chat-footer { display: flex; align-items: center; padding: 10px 15px; border-top: 1px solid #ddd; background-color: #fff; gap: 8px; }
+        .chat-footer input[type="text"] { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; background-color: #f0f2f5; font-size: 14px; }
+        .file-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #0084ff; }
+        .send-btn { background-color: #0084ff; color: #fff; border: none; padding: 8px 14px; border-radius: 50%; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -123,42 +31,66 @@
             <div class="avatar">SL</div>
             <div class="name-status">
                 <h3>Sky Lay</h3>
-                <p>Active 4 hours ago</p>
+                <p>Active Now</p>
             </div>
         </div>
         <div class="icons">
-            <span>📞</span>
-            <span>📹</span>
+            <span onclick="makeCall('Audio')">📞</span>
+            <span onclick="makeCall('Video')">📹</span>
         </div>
     </div>
 
     <div class="chat-body" id="chatBody">
-        <div class="message incoming">မင်္ဂလာပါရှင်။ ဘယ်လိုကူညီပေးရမလဲင့်?</div>
-        <div class="message outgoing">မင်္ဂလာပါဗျာ။ App လေး စမ်းသုံးနေတာပါ။</div>
+        <div class="message incoming">မင်္ဂလာပါရှင်။ လိုအပ်တာတွေ ပို့လို့ရပါပြီ။</div>
     </div>
 
     <div class="chat-footer">
-        <input type="text" id="messageInput" placeholder="Message ရိုက်ရန်...">
+        <label class="file-btn">📷<input type="file" id="imageInput" accept="image/*" style="display: none;" onchange="sendImage(event)"></label>
+        <input type="text" id="messageInput" placeholder="Aa" onkeypress="handlePress(event)">
         <button class="send-btn" onclick="sendMessage()">➤</button>
     </div>
 
     <script>
+        const chatBody = document.getElementById('chatBody');
+
         function sendMessage() {
             const input = document.getElementById('messageInput');
-            const chatBody = document.getElementById('chatBody');
-            
             if (input.value.trim() !== "") {
-                // ကိုယ်ပို့တဲ့ စာကို ပုံဖော်ခြင်း
                 const msgDiv = document.createElement('div');
                 msgDiv.classList.add('message', 'outgoing');
                 msgDiv.innerText = input.value;
                 chatBody.appendChild(msgDiv);
-                
                 input.value = "";
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
+        }
+
+        function handlePress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function sendImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const msgDiv = document.createElement('div');
+                    msgDiv.classList.add('message', 'outgoing');
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    msgDiv.appendChild(img);
+                    chatBody.appendChild(msgDiv);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function makeCall(type) {
+            alert(type + " Call စတင်နေပါပြီ... (ဒီဇိုင်းသက်သက်ဖြစ်ပါသည်)");
         }
     </script>
 
 </body>
 </html>
+
