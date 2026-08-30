@@ -4,196 +4,217 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Chat App</title>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background-color: #fff; display: flex; flex-direction: column; height: 100vh; max-width: 500px; margin: 0 auto; }
-        .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #ddd; background-color: #fff; }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; background: linear-gradient(135deg, #6a11cb, #2575fc); }
-        .name-status h3 { font-size: 16px; color: #000; }
-        .name-status p { font-size: 12px; color: gray; }
-        .header-icons { display: flex; gap: 12px; }
-        .call-btn { background: #f0f2f5; border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: #f9f9f9; }
-        .message { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-break: break-word; }
-        .incoming { background-color: #e4e6eb; color: #000; align-self: flex-start; }
-        .outgoing { background-color: #2575fc; color: #fff; align-self: flex-end; }
-        .message img, .message video { max-width: 100%; border-radius: 10px; margin-top: 5px; display: block; }
-        .message audio { max-width: 100%; margin-top: 5px; }
-        .chat-footer { display: flex; align-items: center; padding: 10px 15px; border-top: 1px solid #ddd; background-color: #fff; gap: 8px; }
-        .chat-footer input[type="text"] { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; background-color: #f0f2f5; font-size: 14px; }
-        .media-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #2575fc; }
-        .send-btn { background-color: #2575fc; color: #fff; border: none; padding: 8px 14px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+        :root { --primary-color: #2575fc; --bg-color: #fff; --text-color: #000; --chat-bg: #f9f9f9; --incoming-bg: #e4e6eb; }
+        .dark-mode { --bg-color: #18191a; --text-color: #e4e6eb; --chat-bg: #242526; --incoming-bg: #3a3b3c; }
+
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; max-width: 500px; margin: 0 auto; transition: 0.3s; }
         
-        /* ခေါ်ဆိုနေစဉ်ပေါ်မည့် Screen အသစ် */
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #ddd; background-color: var(--bg-color); }
+        .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; background: var(--primary-color); }
+        .name-status h3 { font-size: 16px; }
+        .name-status p { font-size: 12px; color: gray; }
+        
+        .header-icons { display: flex; gap: 10px; }
+        .icon-btn { background: #f0f2f5; border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: var(--chat-bg); }
+        .message { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-break: break-word; }
+        .incoming { background-color: var(--incoming-bg); color: var(--text-color); align-self: flex-start; }
+        .outgoing { background-color: var(--primary-color); color: #fff; align-self: flex-end; }
+        
+        .chat-footer { display: flex; align-items: center; padding: 10px 15px; border-top: 1px solid #ddd; background-color: var(--bg-color); gap: 8px; }
+        .chat-footer input[type="text"] { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; background-color: var(--chat-bg); color: var(--text-color); font-size: 14px; }
+        .send-btn { background-color: var(--primary-color); color: #fff; border: none; padding: 8px 14px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+
+        /* Settings Modal (ဆက်တင် စာမျက်နှာငယ်) */
+        #settingsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .settings-content { background: var(--bg-color); width: 90%; max-width: 400px; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .settings-content h2 { font-size: 18px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; font-size: 15px; }
+        .setting-item input[type="text"] { padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd; width: 60%; }
+        .color-picker-group { display: flex; gap: 8px; }
+        .color-box { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; }
+        .close-settings { background: var(--primary-color); color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+
+        /* ဖုန်းခေါ်ဆိုမှု စခရင် */
         #callScreen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; color: #fff; z-index: 999; flex-direction: column; align-items: center; justify-content: space-between; padding: 40px 20px; text-align: center; }
-        #callScreen h2 { font-size: 22px; margin-top: 10px; }
-        #videoElement { width: 100%; max-height: 60vh; background: #000; border-radius: 15px; object-fit: cover; display: none; margin-top: 10px; }
-        .call-info-box { display: flex; flex-direction: column; align-items: center; width: 100%; }
-        .end-call-btn { background: #ff3b30; color: #fff; border: none; width: 65px; height: 65px; border-radius: 50%; font-size: 26px; cursor: pointer; margin-bottom: 20px; }
+        #videoContainer { display: flex; gap: 10px; width: 100%; justify-content: center; }
+        video { width: 45%; max-height: 40vh; background: #000; border-radius: 10px; object-fit: cover; }
+        .call-actions { display: flex; gap: 20px; align-items: center; margin-bottom: 20px; }
+        .accept-btn { background: #34c759; color: #fff; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; cursor: pointer; }
+        .end-call-btn { background: #ff3b30; color: #fff; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div class="user-info">
-            <div class="avatar">MC</div>
+        <div class="user-info" onclick="openSettings()">
+            <div class="avatar" id="headerAvatar">MC</div>
             <div class="name-status">
-                <h3>My Chat App</h3>
-                <p>Online</p>
+                <h3 id="appTitleText">My Chat App</h3>
+                <p>Online (Settings ⚙️)</p>
             </div>
         </div>
         <div class="header-icons">
-            <button class="call-btn" onclick="startAudioCall()">📞</button>
-            <button class="call-btn" onclick="startVideoCall()">📹</button>
+            <button class="icon-btn" onclick="initiateCall('audio')">📞</button>
+            <button class="icon-btn" onclick="initiateCall('video')">📹</button>
+            <button class="icon-btn" onclick="openSettings()">⚙️</button>
         </div>
     </div>
 
-    <!-- ဖုန်း/ဗီဒီယို ခေါ်ဆိုနေစဉ် ပေါ်လာမည့် မျက်နှာပြင် -->
-    <div id="callScreen">
-        <div class="call-info-box">
-            <div id="audioCallAvatar" class="avatar" style="width: 80px; height: 80px; font-size: 30px; margin: 20px auto;">MC</div>
-            <h2 id="callTitle">ခေါ်ဆိုနေပါသည်...</h2>
-            <!-- ဗီဒီယိုခေါ်ချိန် ပေါ်မည့် ကင်မရာအရှေ့မျက်နှာပြင် -->
-            <video id="videoElement" autoplay playsinline></video>
+    <!-- Settings Modal -->
+    <div id="settingsModal">
+        <div class="settings-content">
+            <h2>⚙️ အက်ပ် ဆက်တင်များ (Settings)</h2>
+            <div class="setting-item">
+                <label>အက်ပ်နာမည်:</label>
+                <input type="text" id="nameInputSetting" value="My Chat App">
+            </div>
+            <div class="setting-item">
+                <label>အမှောင်စနစ် (Dark Mode):</label>
+                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+            </div>
+            <div class="setting-item">
+                <label>အသံမြည်သံ (Sound):</label>
+                <input type="checkbox" id="soundToggle" checked>
+            </div>
+            <div class="setting-item">
+                <label>အဓိက အရောင် (Theme):</label>
+                <div class="color-picker-group">
+                    <div class="color-box" style="background: #2575fc;" onclick="changeTheme('#2575fc')"></div>
+                    <div class="color-box" style="background: #e91e63;" onclick="changeTheme('#e91e63')"></div>
+                    <div class="color-box" style="background: #009688;" onclick="changeTheme('#009688')"></div>
+                    <div class="color-box" style="background: #ff9800;" onclick="changeTheme('#ff9800')"></div>
+                </div>
+            </div>
+            <button class="close-settings" onclick="saveSettings()">သိမ်းဆည်းမည် (Save)</button>
         </div>
-        <button class="end-call-btn" onclick="endCall()">📞</button>
+    </div>
+
+    <!-- ဖုန်းခေါ်ဆိုမှု စခရင် -->
+    <div id="callScreen">
+        <h2 id="callStatusText">ဖုန်းခေါ်ဆိုနေပါသည်...</h2>
+        <div id="videoContainer">
+            <video id="localVideo" autoplay playsinline muted></video>
+            <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+        <div class="call-actions">
+            <button class="accept-btn" id="acceptBtn" style="display:none;" onclick="acceptCall()">✔</button>
+            <button class="end-call-btn" onclick="endCall()">📞</button>
+        </div>
     </div>
 
     <div class="chat-body" id="chatBody">
-        <div class="message incoming">မင်္ဂလာပါရှင်။ My Chat App မှ ကြိုဆိုပါတယ်။ စာ၊ ဓာတ်ပုံ၊ အသံဖိုင်နှင့် ဗီဒီယိုခေါ်ဆိုမှုများ ပို့လို့ရပါပြီ။</div>
+        <div class="message incoming">မင်္ဂလာပါရှင်။ ဆာဗာချိတ်ဆက်ပြီးသော ချတ်အက်ပ်သို့ ကြိုဆိုပါတယ်။ အပေါ်ထောင့်ရှိ ⚙️ ကိုနှိပ်၍ ဆက်တင်များ ပြင်ဆင်နိုင်ပါသည်။</div>
     </div>
 
     <div class="chat-footer">
-        <label class="media-btn" title="ဓာတ်ပုံ/ဗီဒီယို ပို့ရန်">📷
-            <input type="file" id="mediaInput" accept="image/*,video/*" style="display: none;" onchange="sendMedia(event)">
-        </label>
-        <label class="media-btn" title="အသံဖိုင် ပို့ရန်">🎵
-            <input type="file" id="audioInput" accept="audio/*" style="display: none;" onchange="sendAudio(event)">
-        </label>
         <input type="text" id="messageInput" placeholder="စာရိုက်ရန်..." onkeypress="handlePress(event)">
         <button class="send-btn" onclick="sendMessage()">➤</button>
     </div>
 
     <script>
+        const socket = io();
         const chatBody = document.getElementById('chatBody');
         const callScreen = document.getElementById('callScreen');
-        const callTitle = document.getElementById('callTitle');
-        const videoElement = document.getElementById('videoElement');
-        const audioCallAvatar = document.getElementById('audioCallAvatar');
-        let localStream = null;
+        const callStatusText = document.getElementById('callStatusText');
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const acceptBtn = document.getElementById('acceptBtn');
+        let localStream;
 
-        function startAudioCall() {
-            callScreen.style.display = 'flex';
-            audioCallAvatar.style.display = 'flex';
-            videoElement.style.display = 'none';
-            callTitle.innerText = "အသံဖိုင်ဖြင့် ခေါ်ဆိုနေသည်...";
-            
-            window.callInterval = setInterval(() => {
-                playBeep();
-            }, 2000);
+        // Settings ထိန်းချုပ်မှုများ
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'flex';
         }
 
-        async function startVideoCall() {
-            callScreen.style.display = 'flex';
-            audioCallAvatar.style.display = 'none';
-            videoElement.style.display = 'block';
-            callTitle.innerText = "ဗီဒီယိုဖြင့် ခေါ်ဆိုနေသည်...";
-
-            try {
-                // ဖုန်း၏ ရှေ့ကင်မရာကို တောင်းခံပြီး ဖွင့်ခြင်း
-                localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
-                videoElement.srcObject = localStream;
-            } catch (err) {
-                alert("ကင်မရာ အသုံးပြုခွင့် (Camera Permission) ပေးရန် လိုအပ်ပါသည်။");
+        function saveSettings() {
+            const newName = document.getElementById('nameInputSetting').value;
+            if(newName.trim() !== "") {
+                document.getElementById('appTitleText').innerText = newName;
+                document.getElementById('headerAvatar').innerText = newName.substring(0, 2).toUpperCase();
             }
+            document.getElementById('settingsModal').style.display = 'none';
         }
 
-        function endCall() {
-            callScreen.style.display = 'none';
-            if (window.callInterval) clearInterval(window.callInterval);
-            
-            // ကင်မရာပွင့်နေပါက ပိတ်ပစ်ရန်
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-            videoElement.srcObject = null;
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
         }
 
-        function playBeep() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = "sine";
-                osc.frequency.setValueAtTime(440, ctx.currentTime);
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 1);
-            } catch(e) {}
+        function changeTheme(color) {
+            document.documentElement.style.setProperty('--primary-color', color);
         }
 
+        // စာပို့ခြင်း
         function sendMessage() {
             const input = document.getElementById('messageInput');
             if (input.value.trim() !== "") {
-                const msgDiv = document.createElement('div');
-                msgDiv.classList.add('message', 'outgoing');
-                msgDiv.innerText = input.value;
-                chatBody.appendChild(msgDiv);
+                socket.emit('chat-message', input.value);
                 input.value = "";
-                chatBody.scrollTop = chatBody.scrollHeight;
             }
         }
+
+        socket.on('chat-message', (msg) => {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', 'incoming');
+            msgDiv.innerText = msg;
+            chatBody.appendChild(msgDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        });
 
         function handlePress(e) {
             if (e.key === 'Enter') sendMessage();
         }
 
-        function sendMedia(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const msgDiv = document.createElement('div');
-                    msgDiv.classList.add('message', 'outgoing');
-                    if (file.type.startsWith('video/')) {
-                        const video = document.createElement('video');
-                        video.src = e.target.result;
-                        video.controls = true;
-                        msgDiv.appendChild(video);
-                    } else {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        msgDiv.appendChild(img);
-                    }
-                    chatBody.appendChild(msgDiv);
-                    chatBody.scrollTop = chatBody.scrollHeight;
-                }
-                reader.readAsDataURL(file);
+        // ဖုန်းခေါ်ဆိုမှု စနစ်များ
+        async function initiateCall(type) {
+            callScreen.style.display = 'flex';
+            callStatusText.innerText = "ခေါ်ဆိုနေသည်...";
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+                localVideo.srcObject = localStream;
+                socket.emit('call-user', { type });
+            } catch (e) {
+                alert("ကင်မရာ သို့မဟုတ် မိုက်ခရိုဖုန်း ခွင့်ပြုချက်လိုပါသည်။");
             }
         }
 
-        function sendAudio(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const msgDiv = document.createElement('div');
-                    msgDiv.classList.add('message', 'outgoing');
-                    const audio = document.createElement('audio');
-                    audio.src = e.target.result;
-                    audio.controls = true;
-                    msgDiv.appendChild(audio);
-                    chatBody.appendChild(msgDiv);
-                    chatBody.scrollTop = chatBody.scrollHeight;
-                }
-                reader.readAsDataURL(file);
-            }
+        socket.on('incoming-call', async (data) => {
+            callScreen.style.display = 'flex';
+            callStatusText.innerText = "ဖုန်းဝင်လာပါပြီ...";
+            acceptBtn.style.display = 'block';
+        });
+
+        async function acceptCall() {
+            acceptBtn.style.display = 'none';
+            callStatusText.innerText = "ပြောဆိုနေစဉ်...";
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localVideo.srcObject = localStream;
+            socket.emit('answer-call');
         }
+
+        socket.on('call-answered', () => {
+            callStatusText.innerText = "ပြောဆိုနေစဉ်...";
+        });
+
+        function endCall() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            callScreen.style.display = 'none';
+            socket.emit('end-call');
+            location.reload();
+        }
+
+        socket.on('call-ended', () => {
+            callScreen.style.display = 'none';
+            location.reload();
+        });
     </script>
-
 </body>
 </html>
+
