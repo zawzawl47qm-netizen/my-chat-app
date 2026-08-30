@@ -106,7 +106,7 @@ const rejectBtn = document.getElementById('rejectBtn');
 
     socket.on('chat message', (data) => {
         const item = document.createElement('li');
-        item.textContent = `${data.name}: ${data.msg}`;
+        item.innerHTML = `<strong>${data.name}:</strong> ${data.msg}`;
         messages.appendChild(item);
         messages.scrollTop = messages.scrollHeight;
     });
