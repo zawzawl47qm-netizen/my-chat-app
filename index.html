@@ -1,273 +1,164 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="my">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messenger Chat & Video Call</title>
+    <title>Messenger Chat</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #ffffff; }
-        
-        /* Messenger Header */
-        .chat-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #e4e6eb; background: #fff; position: sticky; top: 0; z-index: 10; }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        .profile-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
-        .header-info h3 { margin: 0; font-size: 16px; color: #050505; }
-        .header-info p { margin: 0; font-size: 12px; color: #65676b; }
-        .header-icons { display: flex; gap: 20px; font-size: 20px; color: #0084ff; cursor: pointer; }
-
-        /* Video Call Screen Area */
-        .video-container { display: none; background: #000; padding: 10px; text-align: center; }
-        .video-box { display: flex; gap: 10px; justify-content: center; }
-        video { width: 48%; max-height: 200px; background: #222; border-radius: 8px; transform: scaleX(-1); }
-        .call-action-btns { margin-top: 10px; }
-        .call-action-btns button { padding: 8px 20px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; color: white; }
-        #acceptBtn { background: #31a24c; }
-        #rejectBtn { background: #fa383e; }
-
-        /* Messages Area */
-        #messages { list-style-type: none; padding: 15px; margin: 0; height: calc(100vh - 160px); overflow-y: scroll; display: flex; flex-direction: column; gap: 12px; background: #ffffff; }
-        
-        /* Messenger Style Call Log Bubble */
-        .call-log-bubble {
-            background: #ffffff;
-            border: 1px solid #e4e6eb;
-            border-radius: 18px;
-            padding: 12px 16px;
-            max-width: 260px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #fff;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            align-self: flex-start;
+            height: 100vh;
+            max-width: 500px;
+            margin: 0 auto;
         }
-        .call-content {
+        /* Header Style */
+        .header {
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
+            padding: 10px 15px;
+            border-bottom: 1px solid #ddd;
+            background-color: #fff;
         }
-        .call-icon {
-            background: #e4e6eb;
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar {
             width: 40px;
             height: 40px;
+            background-color: #ccc;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
         }
-        .call-details {
+        .name-status h3 {
+            font-size: 16px;
+            color: #000;
+        }
+        .name-status p {
+            font-size: 12px;
+            color: gray;
+        }
+        .icons {
+            display: flex;
+            gap: 20px;
+            color: #0084ff;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        /* Chat Body Style */
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
+            gap: 10px;
+            background-color: #f9f9f9;
         }
-        .call-title {
-            font-weight: bold;
-            font-size: 15px;
-            color: #050505;
-        }
-        .call-time {
-            font-size: 12px;
-            color: #65676b;
-            margin-top: 2px;
-        }
-        .call-btn {
-            background: #f0f2f5;
-            border: none;
+        .message {
+            max-width: 70%;
+            padding: 10px 14px;
             border-radius: 18px;
-            padding: 8px 0;
-            font-weight: bold;
             font-size: 14px;
-            color: #050505;
+            line-height: 1.4;
+        }
+        .incoming {
+            background-color: #e4e6eb;
+            color: #000;
+            align-self: flex-start;
+        }
+        .outgoing {
+            background-color: #0084ff;
+            color: #fff;
+            align-self: flex-end;
+        }
+        /* Footer Input Style */
+        .chat-footer {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-top: 1px solid #ddd;
+            background-color: #fff;
+            gap: 10px;
+        }
+        .chat-footer input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            background-color: #f0f2f5;
+            font-size: 14px;
+        }
+        .send-btn {
+            background-color: #0084ff;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50%;
             cursor: pointer;
-            text-align: center;
-            width: 100%;
-            transition: background 0.2s;
+            font-weight: bold;
         }
-        .call-btn:hover {
-            background: #e4e6eb;
-        }
-
-        /* Footer Input Area */
-        .chat-footer { display: flex; align-items: center; padding: 10px 15px; border-top: 1px solid #e4e6eb; background: #fff; position: fixed; bottom: 0; width: 100%; box-sizing: border-box; gap: 10px; }
-        .chat-footer input { flex: 1; border: none; background: #f0f2f5; padding: 10px 15px; border-radius: 20px; outline: none; font-size: 14px; }
-        .send-icon { color: #0084ff; font-weight: bold; cursor: pointer; border: none; background: none; font-size: 15px; }
     </style>
 </head>
 <body>
 
-<div class="chat-header">
-    <div class="header-left">
-        <img src="https://via.placeholder.com/40" class="profile-img" alt="Profile">
-        <div class="header-info">
-            <h3>Sky Lay</h3>
-            <p>Active 4 hours ago</p>
-        </div>
-    </div>
-    <div class="header-icons">
-        <span id="startVideoCall" title="Video Call">📹</span>
-    </div>
-</div>
-
-<div id="videoContainer" class="video-container">
-    <div class="video-box">
-        <video id="localVideo" autoplay muted playsinline></video>
-        <video id="remoteVideo" autoplay playsinline></video>
-    </div>
-    <div id="callControls" class="call-action-btns" style="display: none;">
-        <button id="acceptBtn">Accept</button>
-        <button id="rejectBtn">Reject</button>
-    </div>
-</div>
-
-<ul id="messages">
-    <div class="call-log-bubble">
-        <div class="call-content">
-            <div class="call-icon">📹</div>
-            <div class="call-details">
-                <span class="call-title">Video call</span>
-                <span class="call-time">1 min 1 sec</span>
+    <div class="header">
+        <div class="user-info">
+            <div class="avatar">SL</div>
+            <div class="name-status">
+                <h3>Sky Lay</h3>
+                <p>Active 4 hours ago</p>
             </div>
         </div>
-        <button class="call-btn" onclick="triggerCall()">Call back</button>
-    </div>
-
-    <div class="call-log-bubble">
-        <div class="call-content">
-            <div class="call-icon">📹</div>
-            <div class="call-details">
-                <span class="call-title">Video call</span>
-                <span class="call-time">2 min 36 sec</span>
-            </div>
+        <div class="icons">
+            <span>📞</span>
+            <span>📹</span>
         </div>
-        <button class="call-btn" onclick="triggerCall()">Call again</button>
     </div>
-</ul>
 
-<div class="chat-footer">
-    <input type="text" id="message-input" placeholder="Message...">
-    <button id="send-btn" class="send-icon">Send</button>
-</div>
+    <div class="chat-body" id="chatBody">
+        <div class="message incoming">မင်္ဂလာပါရှင်။ ဘယ်လိုကူညီပေးရမလဲင့်?</div>
+        <div class="message outgoing">မင်္ဂလာပါဗျာ။ App လေး စမ်းသုံးနေတာပါ။</div>
+    </div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io();
-    const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
-    const messages = document.getElementById('messages');
-    const startVideoCallBtn = document.getElementById('startVideoCall');
-    const videoContainer = document.getElementById('videoContainer');
-    const callControls = document.getElementById('callControls');
-    const acceptBtn = document.getElementById('acceptBtn');
-    const rejectBtn = document.getElementById('rejectBtn');
-    
-    const localVideo = document.getElementById('localVideo');
-    const remoteVideo = document.getElementById('remoteVideo');
+    <div class="chat-footer">
+        <input type="text" id="messageInput" placeholder="Message ရိုက်ရန်...">
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+    </div>
 
-    let localStream;
-    let peerConnection;
-    let incomingOffer;
-
-    const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-    async function startCamera() {
-        try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            localVideo.srcObject = localStream;
-        } catch (e) {
-            console.error("Camera access denied", e);
-        }
-    }
-    startCamera();
-
-    function triggerCall() {
-        videoContainer.style.display = 'block';
-        startVideoCallBtn.click();
-    }
-
-    sendBtn.onclick = () => {
-        const msg = messageInput.value.trim();
-        if (msg) {
-            socket.emit('chat message', { name: 'You', msg });
-            messageInput.value = '';
-        }
-    };
-
-    socket.on('chat message', (data) => {
-        const item = document.createElement('li');
-        item.innerHTML = `<strong>${data.name}:</strong> ${data.msg}`;
-        messages.appendChild(item);
-        messages.scrollTop = messages.scrollHeight;
-    });
-
-    startVideoCallBtn.onclick = async () => {
-        videoContainer.style.display = 'block';
-        peerConnection = new RTCPeerConnection(servers);
-
-        if (localStream) {
-            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-        }
-
-        peerConnection.ontrack = (event) => {
-            remoteVideo.srcObject = event.streams[0];
-        };
-
-        peerConnection.onicecandidate = (event) => {
-            if (event.candidate) socket.emit('ice-candidate', event.candidate);
-        };
-
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        socket.emit('offer', offer);
-    };
-
-    socket.on('offer', async (offer) => {
-        incomingOffer = offer;
-        videoContainer.style.display = 'block';
-        callControls.style.display = 'block';
-    });
-
-    acceptBtn.onclick = async () => {
-        callControls.style.display = 'none';
-        peerConnection = new RTCPeerConnection(servers);
-
-        if (localStream) {
-            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-        }
-
-        peerConnection.ontrack = (event) => {
-            remoteVideo.srcObject = event.streams[0];
-        };
-
-        peerConnection.onicecandidate = (event) => {
-            if (event.candidate) socket.emit('ice-candidate', event.candidate);
-        };
-
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(incomingOffer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-        socket.emit('answer', answer);
-    };
-
-    rejectBtn.onclick = () => {
-        videoContainer.style.display = 'none';
-        callControls.style.display = 'none';
-    };
-
-    socket.on('answer', async (answer) => {
-        if (peerConnection) {
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-        }
-    });
-
-    socket.on('ice-candidate', async (candidate) => {
-        try {
-            if (peerConnection) {
-                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    <script>
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const chatBody = document.getElementById('chatBody');
+            
+            if (input.value.trim() !== "") {
+                // ကိုယ်ပို့တဲ့ စာကို ပုံဖော်ခြင်း
+                const msgDiv = document.createElement('div');
+                msgDiv.classList.add('message', 'outgoing');
+                msgDiv.innerText = input.value;
+                chatBody.appendChild(msgDiv);
+                
+                input.value = "";
+                chatBody.scrollTop = chatBody.scrollHeight;
             }
-        } catch (e) {
-            console.error(e);
         }
-    });
-</script>
+    </script>
 
 </body>
 </html>
