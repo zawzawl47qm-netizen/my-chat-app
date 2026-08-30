@@ -1,23 +1,27 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static('public')); // (သို့မဟုတ်) ပုံမှန် ဖိုင်များထားရာ နေရာ
+// ဖိုင်များအားလုံးကို တိုက်ရိုက်ဖတ်နိုင်ရန် ညွှန်ကြားခြင်း
+app.use(express.static(path.join(__dirname)));
+
+// ပင်မလင့်ခ် (Home) ဝင်လာလျှင် index.html ကို ပြရန်
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 io.on('connection', (socket) => {
     console.log('တစ်ယောက် ချိတ်ဆက်ဝင်ရောက်လာပါပြီ:', socket.id);
 
-    // စာပို့သည့်အခါ အခြားသူဆီ ပို့ပေးရန်
-    socket.id = socket.id;
     socket.on('chat-message', (data) => {
         io.emit('chat-message', data);
     });
 
-    // ဖုန်းခေါ်ဆိုမှုနှင့် ဗီဒီယိုခေါ်ဆိုမှုများအတွက် Signal လွှဲပြောင်းပေးရန်
     socket.on('call-user', (data) => {
         socket.broadcast.emit('incoming-call', data);
     });
