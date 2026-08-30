@@ -1,252 +1,209 @@
 <!DOCTYPE html>
 <html lang="my">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="/manifest.json">
-    <title>My Chat App</title>
-    <script src="/socket.io/socket.io.js"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        :root { --primary-color: #2575fc; --bg-color: #fff; --text-color: #000; --chat-bg: #f9f9f9; --incoming-bg: #e4e6eb; }
-        .dark-mode { --bg-color: #18191a; --text-color: #e4e6eb; --chat-bg: #242526; --incoming-bg: #3a3b3c; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="appTitleText">My Chat App</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f0f2f5; display: flex; flex-direction: column; height: 100vh; }
+    .header { background: #075e54; color: white; padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; }
+    .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .message { max-width: 70%; padding: 10px; border-radius: 8px; word-break: break-word; }
+    .message.incoming { background: white; align-self: flex-start; }
+    .message.outgoing { background: #dcf8c6; align-self: flex-end; }
+    .chat-footer { padding: 10px; background: white; display: flex; align-items: center; gap: 10px; }
+    .chat-footer input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
+    .btn { background: #075e54; color: white; border: none; padding: 10px 15px; border-radius: 20px; cursor: pointer; }
+    
+    /* စတေကာဘောက်စ် ဒီဇိုင်း */
+    .sticker-container { display: flex; gap: 15px; padding: 5px 15px; background: #fff; border-top: 1px solid #eee; }
+    .sticker-item { font-size: 28px; cursor: pointer; transition: transform 0.2s; }
+    .sticker-item:hover { transform: scale(1.2); }
 
-        body { background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; height: 100vh; max-width: 500px; margin: 0 auto; transition: 0.3s; }
-        
-        .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #ddd; background-color: var(--bg-color); }
-        .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; background: var(--primary-color); }
-        .name-status h3 { font-size: 16px; }
-        .name-status p { font-size: 12px; color: gray; }
-        
-        .header-icons { display: flex; gap: 8px; }
-        .icon-btn { background: #f0f2f5; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        
-        .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: var(--chat-bg); }
-        .message { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-break: break-word; }
-        .incoming { background-color: var(--incoming-bg); color: var(--text-color); align-self: flex-start; }
-        .outgoing { background-color: var(--primary-color); color: #fff; align-self: flex-end; }
-        .message img, .message video { max-width: 100%; border-radius: 10px; margin-top: 5px; }
-        
-        .chat-footer { display: flex; align-items: center; padding: 10px 15px; border-top: 1px solid #ddd; background-color: var(--bg-color); gap: 8px; }
-        .upload-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--primary-color); }
-        .chat-footer input[type="text"] { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; background-color: var(--chat-bg); color: var(--text-color); font-size: 14px; }
-        .send-btn { background-color: var(--primary-color); color: #fff; border: none; padding: 8px 14px; border-radius: 50%; cursor: pointer; font-weight: bold; }
-
-        /* Settings Modal */
-        #settingsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .settings-content { background: var(--bg-color); width: 90%; max-width: 400px; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .settings-content h2 { font-size: 18px; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
-        .setting-item { display: flex; justify-content: space-between; align-items: center; font-size: 15px; }
-        .setting-item input[type="text"] { padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd; width: 60%; }
-        .color-picker-group { display: flex; gap: 8px; }
-        .color-box { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid #fff; }
-        .close-settings { background: var(--primary-color); color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-
-        /* ဖုန်းခေါ်ဆိုမှု စခရင် */
-        #callScreen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; color: #fff; z-index: 999; flex-direction: column; align-items: center; justify-content: space-between; padding: 40px 20px; text-align: center; }
-        #videoContainer { display: flex; gap: 10px; width: 100%; justify-content: center; }
-        video { width: 45%; max-height: 40vh; background: #000; border-radius: 10px; object-fit: cover; }
-        .call-actions { display: flex; gap: 20px; align-items: center; margin-bottom: 20px; }
-        .accept-btn { background: #34c759; color: #fff; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; cursor: pointer; }
-        .end-call-btn { background: #ff3b30; color: #fff; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 24px; cursor: pointer; }
-    </style>
+    /* ဖုန်းခေါ်ဆိုသည့် စခရင် ဒီဇိုင်း */
+    #callScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 999; color: white; }
+    .video-container { display: flex; gap: 10px; margin-bottom: 20px; }
+    video { width: 140px; height: 180px; background: #333; border-radius: 10px; object-fit: cover; }
+    .call-actions { display: flex; gap: 20px; }
+    .call-btn { padding: 12px 20px; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; color: white; }
+    .accept-btn { background: #28a745; display: none; }
+    .end-btn { background: #dc3545; }
+    .mute-btn { background: #ffc107; color: black; }
+  </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="user-info" onclick="openSettings()">
-            <div class="avatar" id="headerAvatar">MC</div>
-            <div class="name-status">
-                <h3 id="appTitleText">My Chat App</h3>
-                <p>Online (Settings ⚙️)</p>
-            </div>
-        </div>
-        <div class="header-icons">
-            <button class="icon-btn" onclick="initiateCall('audio')">📞</button>
-            <button class="icon-btn" onclick="initiateCall('video')">📹</button>
-            <button class="icon-btn" onclick="openSettings()">⚙️</button>
-        </div>
+  <!-- Header -->
+  <div class="header">
+    <div id="headerAvatar">My Chat App</div>
+    <div>
+      <button onclick="initiateCall('audio')" class="btn" style="padding: 5px 10px;">📞 ခေါ်မည်</button>
+      <button onclick="initiateCall('video')" class="btn" style="padding: 5px 10px;">📹 ဗီဒီယိုကော</button>
     </div>
+  </div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal">
-        <div class="settings-content">
-            <h2>⚙️ အက်ပ် ဆက်တင်များ (Settings)</h2>
-            <div class="setting-item">
-                <label>အက်ပ်နာမည်:</label>
-                <input type="text" id="nameInputSetting" value="My Chat App">
-            </div>
-            <div class="setting-item">
-                <label>အမှောင်စနစ် (Dark Mode):</label>
-                <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
-            </div>
-            <div class="setting-item">
-                <label>အဓိက အရောင် (Theme):</label>
-                <div class="color-picker-group">
-                    <div class="color-box" style="background: #2575fc;" onclick="changeTheme('#2575fc')"></div>
-                    <div class="color-box" style="background: #e91e63;" onclick="changeTheme('#e91e63')"></div>
-                    <div class="color-box" style="background: #009688;" onclick="changeTheme('#009688')"></div>
-                    <div class="color-box" style="background: #ff9800;" onclick="changeTheme('#ff9800')"></div>
-                </div>
-            </div>
-            <button class="close-settings" onclick="saveSettings()">သိမ်းဆည်းမည် (Save)</button>
-        </div>
+  <!-- Chat Messages Area -->
+  <div class="chat-body" id="chatBody">
+    <div class="message incoming">မင်္ဂလာပါရှင့်။ စတေကာပုံလေးများနဲ့ ဖုန်းခေါ်ဆိုမှုများ ပြုလုပ်နိုင်ပါပြီ။</div>
+  </div>
+
+  <!-- မျက်နှာပြောင်တဲ့ စတေကာအရုပ်လေးများ -->
+  <div class="sticker-container">
+    <span class="sticker-item" onclick="sendSticker('😜')">😜</span>
+    <span class="sticker-item" onclick="sendSticker('🤪')">🤪</span>
+    <span class="sticker-item" onclick="sendSticker('😂')">😂</span>
+    <span class="sticker-item" onclick="sendSticker('😎')">😎</span>
+    <span class="sticker-item" onclick="sendSticker('👻')">👻</span>
+    <span class="sticker-item" onclick="sendSticker('🥳')">🥳</span>
+  </div>
+
+  <!-- Chat Footer (Input & Send) -->
+  <div class="chat-footer">
+    <input type="text" id="messageInput" placeholder="စာရိုက်ရန်..." onkeypress="handlePress(event)">
+    <button class="btn" onclick="sendMessage()">ပို့မည်</button>
+  </div>
+
+  <!-- ဖုန်းခေါ်ဆိုသည့် စခရင် (Call Screen UI) -->
+  <div id="callScreen">
+    <h2 id="callStatusText">ဖုန်းခေါ်ဆိုနေသည်...</h2>
+    <div class="video-container">
+      <video id="localVideo" autoplay playsinline muted></video>
+      <video id="remoteVideo" autoplay playsinline></video>
     </div>
-
-    <!-- ဖုန်းခေါ်ဆိုမှု စခရင် -->
-    <div id="callScreen">
-        <h2 id="callStatusText">ဖုန်းခေါ်ဆိုနေပါသည်...</h2>
-        <div id="videoContainer">
-            <video id="localVideo" autoplay playsinline muted></video>
-            <video id="remoteVideo" autoplay playsinline></video>
-        </div>
-        <div class="call-actions">
-            <button class="accept-btn" id="acceptBtn" style="display:none;" onclick="acceptCall()">✔</button>
-            <button class="end-call-btn" onclick="endCall()">📞</button>
-        </div>
+    <div class="call-actions">
+      <button class="call-btn accept-btn" id="acceptBtn" onclick="acceptCall()">ကိုင်မည်</button>
+      <button class="call-btn mute-btn" onclick="toggleMute()">မိုက် အပိတ်/အဖွင့်</button>
+      <button class="call-btn end-btn" onclick="endCall()">ဖုန်းချမည်</button>
     </div>
+  </div>
 
-    <div class="chat-body" id="chatBody">
-        <div class="message incoming">မင်္ဂလာပါရှင်။ ဓာတ်ပုံနှင့် ဗီဒီယိုများပါ ပို့လို့ရသော ချတ်အက်ပ်သို့ ကြိုဆိုပါတယ်။</div>
-    </div>
+  <!-- Socket.io နှင့် JavaScript ကုဒ်များ -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const chatBody = document.getElementById('chatBody');
+    const callScreen = document.getElementById('callScreen');
+    const callStatusText = document.getElementById('callStatusText');
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const acceptBtn = document.getElementById('acceptBtn');
+    let localStream;
+    let remoteStream;
+    let peerConnection;
+    let isMuted = false;
 
-    <div class="chat-footer">
-        <input type="file" id="mediaInput" accept="image/*,video/*" style="display: none;" onchange="sendMedia(event)">
-        <button class="upload-btn" onclick="document.getElementById('mediaInput').click()">📷</button>
-        <input type="text" id="messageInput" placeholder="စာရိုက်ရန်..." onkeypress="handlePress(event)">
-        <button class="send-btn" onclick="sendMessage()">➤</button>
-    </div>
+    const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-    <script>
-        const socket = io();
-        const chatBody = document.getElementById('chatBody');
-        const callScreen = document.getElementById('callScreen');
-        const callStatusText = document.getElementById('callStatusText');
-        const localVideo = document.getElementById('localVideo');
-        const remoteVideo = document.getElementById('remoteVideo');
-        const acceptBtn = document.getElementById('acceptBtn');
-        let localStream;
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      if (input.value.trim() !== "") {
+        appendMessage(input.value, 'outgoing');
+        socket.emit('chat-message', { type: 'text', content: input.value });
+        input.value = "";
+      }
+    }
 
-        function openSettings() {
-            document.getElementById('settingsModal').style.display = 'flex';
+    // စတေကာပို့ခြင်း
+    function sendSticker(stickerEmoji) {
+      appendMessage(stickerEmoji, 'outgoing');
+      socket.emit('chat-message', { type: 'text', content: stickerEmoji });
+    }
+
+    async function initiateCall(type) {
+      callScreen.style.display = 'flex';
+      callStatusText.innerText = 'ခေါ်ဆိုနေသည်...';
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
+        localVideo.srcObject = localStream;
+        createPeerConnection();
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        socket.emit('call-user', { offer, type });
+      } catch (error) {
+        alert("ကင်မရာ သို့မဟုတ် မိုက်ခရိုဖုန်း ခွင့်ပြုချက် လိုအပ်ပါသည်။");
+        endCall();
+      }
+    }
+
+    function createPeerConnection() {
+      peerConnection = new RTCPeerConnection(servers);
+      peerConnection.ontrack = (event) => {
+        remoteStream = event.streams[0];
+        remoteVideo.srcObject = remoteStream;
+      };
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) socket.emit('ice-candidate', event.candidate);
+      };
+    }
+
+    socket.on('incoming-call', async (data) => {
+      callScreen.style.display = 'flex';
+      callStatusText.innerText = 'ဖုန်းဝင်လာပြီ...';
+      acceptBtn.style.display = 'block';
+      window.incomingOffer = data.offer;
+    });
+
+    async function acceptCall() {
+      acceptBtn.style.display = 'none';
+      callStatusText.innerText = 'ပြောဆိုနေစဉ်...';
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        localVideo.srcObject = localStream;
+        createPeerConnection();
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(window.incomingOffer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit('answer-call', answer);
+      } catch (error) { console.error(error); }
+    }
+
+    socket.on('call-answered', async (answer) => {
+      callStatusText.innerText = 'ပြောဆိုနေစဉ်...';
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on('ice-candidate', async (candidate) => {
+      if (peerConnection) await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+
+    function toggleMute() {
+      if (localStream) {
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (audioTrack) {
+          isMuted = !isMuted;
+          audioTrack.enabled = !isMuted;
+          alert(isMuted ? "မိုက် ပိတ်လိုက်ပါပြီ" : "မိုက် ဖွင့်လိုက်ပါပြီ");
         }
+      }
+    }
 
-        function saveSettings() {
-            const newName = document.getElementById('nameInputSetting').value;
-            if(newName.trim() !== "") {
-                document.getElementById('appTitleText').innerText = newName;
-                document.getElementById('headerAvatar').innerText = newName.substring(0, 2).toUpperCase();
-            }
-            document.getElementById('settingsModal').style.display = 'none';
-        }
+    function endCall() {
+      if (localStream) localStream.getTracks().forEach(track => track.stop());
+      if (peerConnection) peerConnection.close();
+      callScreen.style.display = 'none';
+      acceptBtn.style.display = 'none';
+      socket.emit('end-call');
+      location.reload();
+    }
 
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-        }
+    socket.on('call-ended', () => { endCall(); });
 
-        function changeTheme(color) {
-            document.documentElement.style.setProperty('--primary-color', color);
-        }
+    socket.on('chat-message', (data) => {
+      appendMessage(data.content, 'incoming');
+    });
 
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            if (input.value.trim() !== "") {
-                appendMessage(input.value, 'outgoing');
-                socket.emit('chat-message', { type: 'text', content: input.value });
-                input.value = "";
-            }
-        }
+    function appendMessage(text, className) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('message', className);
+      msgDiv.innerText = text;
+      chatBody.appendChild(msgDiv);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
 
-        function sendMedia(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const mediaData = { type: file.type.startsWith('video') ? 'video' : 'image', content: e.target.result };
-                    appendMediaMessage(mediaData.content, mediaData.type, 'outgoing');
-                    socket.emit('chat-message', mediaData);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        socket.on('chat-message', (data) => {
-            if (data.type === 'text') {
-                appendMessage(data.content, 'incoming');
-            } else {
-                appendMediaMessage(data.content, data.type, 'incoming');
-            }
-        });
-
-        function appendMessage(text, className) {
-            const msgDiv = document.createElement('div');
-            msgDiv.classList.add('message', className);
-            msgDiv.innerText = text;
-            chatBody.appendChild(msgDiv);
-            chatBody.scrollTop = chatBody.scrollHeight;
-        }
-
-        function appendMediaMessage(src, type, className) {
-            const msgDiv = document.createElement('div');
-            msgDiv.classList.add('message', className);
-            if (type === 'image') {
-                msgDiv.innerHTML = `<img src="${src}" alt="Image">`;
-            } else {
-                msgDiv.innerHTML = `<video src="${src}" controls></video>`;
-            }
-            chatBody.appendChild(msgDiv);
-            chatBody.scrollTop = chatBody.scrollHeight;
-        }
-
-        function handlePress(e) {
-            if (e.key === 'Enter') sendMessage();
-        }
-
-        async function initiateCall(type) {
-            callScreen.style.display = 'flex';
-            callStatusText.innerText = "ခေါ်ဆိုနေသည်...";
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true });
-                localVideo.srcObject = localStream;
-                socket.emit('call-user', { type });
-            } catch (e) {
-                alert("ကင်မရာ သို့မဟုတ် မိုက်ခရိုဖုန်း ခွင့်ပြုချက်လိုပါသည်။");
-            }
-        }
-
-        socket.on('incoming-call', async (data) => {
-            callScreen.style.display = 'flex';
-            callStatusText.innerText = "ဖုန်းဝင်လာပါပြီ...";
-            acceptBtn.style.display = 'block';
-        });
-
-        async function acceptCall() {
-            acceptBtn.style.display = 'none';
-            callStatusText.innerText = "ပြောဆိုနေစဉ်...";
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            localVideo.srcObject = localStream;
-            socket.emit('answer-call');
-        }
-
-        socket.on('call-answered', () => {
-            callStatusText.innerText = "ပြောဆိုနေစဉ်...";
-        });
-
-        function endCall() {
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-            callScreen.style.display = 'none';
-            socket.emit('end-call');
-            location.reload();
-        }
-
-        socket.on('call-ended', () => {
-            callScreen.style.display = 'none';
-            location.reload();
-        });
-    </script>
+    function handlePress(e) { if (e.key === 'Enter') sendMessage(); }
+  </script>
 </body>
-    </html>
+</html>
 
