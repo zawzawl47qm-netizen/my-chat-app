@@ -3,52 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messenger Chat App</title>
+    <title>My Chat App</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { background-color: #fff; display: flex; flex-direction: column; height: 100vh; max-width: 500px; margin: 0 auto; }
-        .header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #ddd; background-color: #fff; }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #ddd; background-color: #fff; }
         .user-info { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; background: linear-gradient(135deg, #00c6ff, #0072ff); }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; background: linear-gradient(135deg, #6a11cb, #2575fc); }
         .name-status h3 { font-size: 16px; color: #000; }
         .name-status p { font-size: 12px; color: gray; }
         .chat-body { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background-color: #f9f9f9; }
         .message { max-width: 75%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; word-break: break-word; }
         .incoming { background-color: #e4e6eb; color: #000; align-self: flex-start; }
-        .outgoing { background-color: #0084ff; color: #fff; align-self: flex-end; }
+        .outgoing { background-color: #2575fc; color: #fff; align-self: flex-end; }
         .message img, .message video { max-width: 100%; border-radius: 10px; margin-top: 5px; display: block; }
         .message audio { max-width: 100%; margin-top: 5px; }
         .chat-footer { display: flex; align-items: center; padding: 10px 15px; border-top: 1px solid #ddd; background-color: #fff; gap: 8px; }
         .chat-footer input[type="text"] { flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px; outline: none; background-color: #f0f2f5; font-size: 14px; }
-        .media-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #0084ff; }
-        .send-btn { background-color: #0084ff; color: #fff; border: none; padding: 8px 14px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+        .media-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #2575fc; }
+        .send-btn { background-color: #2575fc; color: #fff; border: none; padding: 8px 14px; border-radius: 50%; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
+
     <div class="header">
         <div class="user-info">
-            <div class="avatar">SL</div>
+            <div class="avatar">MC</div>
             <div class="name-status">
-                <h3>Sky Lay</h3>
-                <p>Active Now</p>
+                <h3>My Chat App</h3>
+                <p>Online</p>
             </div>
         </div>
     </div>
+
     <div class="chat-body" id="chatBody">
-        <div class="message incoming">မင်္ဂလာပါရှင်။ စာ၊ ဓာတ်ပုံ၊ အသံဖိုင်နှင့် ဗီဒီယိုများ ပို့လို့ရပါပြီ။</div>
+        <div class="message incoming">မင်္ဂလာပါရှင်။ My Chat App မှ ကြိုဆိုပါတယ်။ စာ၊ ဓာတ်ပုံ၊ အသံဖိုင်နှင့် ဗီဒီယိုများ ပို့လို့ရပါပြီ။</div>
     </div>
+
     <div class="chat-footer">
+        <!-- ဓာတ်ပုံနှင့် ဗီဒီယို တင်ရန် -->
         <label class="media-btn" title="ဓာတ်ပုံ/ဗီဒီယို ပို့ရန်">📷
             <input type="file" id="mediaInput" accept="image/*,video/*" style="display: none;" onchange="sendMedia(event)">
         </label>
+        
+        <!-- အသံဖိုင် တင်ရန် -->
         <label class="media-btn" title="အသံဖိုင် ပို့ရန်">🎵
             <input type="file" id="audioInput" accept="audio/*" style="display: none;" onchange="sendAudio(event)">
         </label>
-        <input type="text" id="messageInput" placeholder="Aa" onkeypress="handlePress(event)">
+
+        <input type="text" id="messageInput" placeholder="စာရိုက်ရန်..." onkeypress="handlePress(event)">
         <button class="send-btn" onclick="sendMessage()">➤</button>
     </div>
+
     <script>
         const chatBody = document.getElementById('chatBody');
+
         function sendMessage() {
             const input = document.getElementById('messageInput');
             if (input.value.trim() !== "") {
@@ -60,9 +69,11 @@
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
         }
+
         function handlePress(e) {
             if (e.key === 'Enter') sendMessage();
         }
+
         function sendMedia(event) {
             const file = event.target.files[0];
             if (file) {
@@ -70,6 +81,7 @@
                 reader.onload = function(e) {
                     const msgDiv = document.createElement('div');
                     msgDiv.classList.add('message', 'outgoing');
+                    
                     if (file.type.startsWith('video/')) {
                         const video = document.createElement('video');
                         video.src = e.target.result;
@@ -80,12 +92,14 @@
                         img.src = e.target.result;
                         msgDiv.appendChild(img);
                     }
+
                     chatBody.appendChild(msgDiv);
                     chatBody.scrollTop = chatBody.scrollHeight;
                 }
                 reader.readAsDataURL(file);
             }
         }
+
         function sendAudio(event) {
             const file = event.target.files[0];
             if (file) {
@@ -93,10 +107,12 @@
                 reader.onload = function(e) {
                     const msgDiv = document.createElement('div');
                     msgDiv.classList.add('message', 'outgoing');
+                    
                     const audio = document.createElement('audio');
                     audio.src = e.target.result;
                     audio.controls = true;
                     msgDiv.appendChild(audio);
+
                     chatBody.appendChild(msgDiv);
                     chatBody.scrollTop = chatBody.scrollHeight;
                 }
@@ -104,6 +120,6 @@
             }
         }
     </script>
+
 </body>
 </html>
-
