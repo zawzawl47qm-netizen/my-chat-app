@@ -23,8 +23,7 @@ io.on('connection', (socket) => {
   console.log('တစ်ယောက်က် ဆက်သွယ်လာပါပြီ:', socket.id);
 
   // စာသား မက်ဆေ့ချ် ပို့ခြင်း
-  socket.on('chat-message', (data) => {
-    io.emit('chat-message', data);
+socket.broadcast.emit('chat-message', data);
   });
 
   // ဗီဒီယို/ဖုန်း ခေါ်ဆိုရန် Signal များနှင့် WebRTC
